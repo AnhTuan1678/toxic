@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Kiểm Tra Câu Toxic</title>
+        <!-- <link rel="stylesheet" href="style.css" /> -->
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                font-family: 'Roboto', sans-serif;
+                line-height: 1.6;
+                background: linear-gradient(to bottom, #ffffff, #e0f7fa);
+                color: #333;
+                padding: 20px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+            }
+
+            /* Khung */
+            .container {
+                width: 100%;
+                max-width: 550px;
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 40px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                text-align: center;
+                transition: transform 0.3s ease-in-out;
+                background-color: #e0f7fa;
+            }
+
+            /* Các thành phần khác */
+            h1 {
+                color: #1e88e5;
+                font-size: 2.5rem;
+                margin-bottom: 20px;
+                font-weight: 600;
+                text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.1);
+            }
+
+            p {
+                color: #444;
+                margin-bottom: 30px;
+                font-size: 1.1rem;
+            }
+
+            input {
+                width: 100%;
+                padding: 15px;
+                margin: 15px 0;
+                border-radius: 8px;
+                border: 1px solid #ccc;
+                font-size: 1.1rem;
+                outline: none;
+                transition: border 0.3s ease;
+                background-color: #ffffff;
+            }
+
+            input:focus {
+                border-color: #80d4ff;
+                box-shadow: 0 0 8px rgba(128, 212, 255, 0.5);
+            }
+
+            button {
+                width: 100%;
+                padding: 15px;
+                background-color: #80d4ff;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 1.2rem;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+
+            button:hover {
+                background-color: #4fc3f7;
+            }
+
+            .table-container {
+                height: 300px;
+                overflow-y: auto;
+                margin-top: 20px;
+            }
+
+            .result {
+                margin-top: 25px;
+                font-size: 1.3rem;
+                font-weight: 500;
+                padding: 15px;
+                border-radius: 8px;
+                background-color: #e0f7fa;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                transition: background-color 0.3s ease;
+            }
+
+            .toxic {
+                background-color: #f44336;
+                color: white;
+            }
+
+            .untoxic {
+                background-color: #4caf50;
+                color: white;
+            }
+
+            @media (max-width: 600px) {
+                .container {
+                    padding: 20px;
+                }
+
+                h1 {
+                    font-size: 2rem;
+                }
+
+                input,
+                button {
+                    font-size: 1rem;
+                }
+            }
+
+            textarea {
+                width: 100%;
+                padding: 15px;
+                margin: 15px 0;
+                border-radius: 8px;
+                border: 1px solid #ccc;
+                font-size: 1.1rem;
+                outline: none;
+                transition: border 0.3s ease, box-shadow 0.3s ease;
+                background-color: #ffffff;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                resize: vertical;
+            }
+
+            /* Hiệu ứng khi textarea được focus */
+            textarea:focus {
+                border-color: #80d4ff;
+                box-shadow: 0 0 8px rgba(128, 212, 255, 0.5);
+            }
+
+            /* Thêm padding cho các ô nhập vào để nhìn dễ chịu hơn */
+            textarea::placeholder {
+                color: #888;
+                font-style: italic;
+            }
+
+            /* Bảng lịch sử */
+            #historyTable {
+                width: 100%;
+                border-collapse: collapse;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+                background-color: #ffffff;
+                table-layout: auto;
+            }
+
+            #historyTable th,
+            #historyTable td {
+                padding: 10px;
+                text-align: left;
+                border: 1px solid #ddd;
+                font-size: 1rem;
+                word-wrap: break-word;
+                white-space: normal;
+                max-width: 300px;
+            }
+
+            #historyTable th {
+                background-color: #80d4ff;
+                color: white;
+            }
+
+            #historyTable tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+
+            #historyTable tr:hover {
+                background-color: #e1f5fe;
+            }
+
+            thead th {
+                position: sticky;
+                top: 0; /* Giữ vị trí của thẻ <th> ở trên cùng khi cuộn */
+                background-color: #f1f1f1; /* Màu nền để phần tử sticky dễ nhìn hơn */
+                z-index: 1; /* Đảm bảo header nổi lên trên nội dung */
+            }
+
+            .hidden{
+                visibility: hidden;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Kiểm Tra Câu Toxic</h1>
+            <p>
+                Nhập câu vào ô dưới đây để kiểm tra xem câu đó có phải là
+                "Toxic" hay không.
+            </p>
+
+            <form id="toxicForm" action="/api" method="POST">
+                <label for="sentence">Nhập câu:</label>
+                <textarea
+                    id="sentence"
+                    placeholder="Nhập câu ở đây"
+                    rows="4"
+                    cols="50"
+                ></textarea>
+                <button type="submit">Kiểm Tra</button>
+            </form>
+
+            <div id="result" class="result hidden">result</div>
+
+            <h2>Lịch Sử Kiểm Tra</h2>
+            <div class="table-container">
+                <table id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Câu Kiểm Tra</th>
+                            <th>Kết Quả</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            const historyTable = document
+                .getElementById('historyTable')
+                .querySelector('tbody');
+            const history = JSON.parse(localStorage.getItem('t_history')) || [];
+
+            // Hàm thêm một dòng mới vào bảng
+            function addRowToTable(historyTable, rowData) {
+                const rowCount = historyTable.rows.length + 1; // Số thứ tự
+                const newRow = historyTable.insertRow(0); // Tạo dòng mới
+
+                // Thêm các ô vào dòng mới
+                const cell1 = newRow.insertCell(0);
+                const cell2 = newRow.insertCell(1);
+                const cell3 = newRow.insertCell(2);
+
+                cell1.textContent = rowCount; // STT
+                cell2.textContent = rowData.sentence; // Câu kiểm tra
+                cell3.textContent = rowData.isToxic ? 'Toxic' : 'Không Toxic'; // Kết quả
+                cell3.style.color = rowData.isToxic ? '#f44336' : '#4caf50'; // Màu sắc kết quả
+            }
+
+            // Thêm dữ liệu lịch sử vào bảng
+            history.forEach(item => {
+                addRowToTable(historyTable, item);
+            });
+
+            // Ghi đè phương thức push của history để cập nhật bảng và lưu vào localStorage
+            history.push = function () {
+                Array.prototype.push.apply(this, arguments);
+
+                // Thêm dòng mới vào bảng lịch sử với dữ liệu mới
+                addRowToTable(historyTable, this[this.length - 1]);
+
+                // Lưu vào localStorage
+                localStorage.setItem('t_history', JSON.stringify(this));
+            };
+
+            document
+                .getElementById('toxicForm')
+                .addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    // Lấy giá trị câu nhập vào
+                    const sentence = document.getElementById('sentence').value;
+                    if (!sentence.trim()) return;
+
+                    fetch('/api', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ text: sentence }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Prediction:', data.prediction);
+
+                            // Kiểm tra câu (giả định kết quả là ngẫu nhiên)
+                            const isToxic = data.prediction;
+                            const resultDiv = document.getElementById('result');
+
+                            // Hiển thị kết quả kiểm tra
+                            resultDiv.className =
+                                'result ' + (isToxic ? 'toxic' : 'untoxic');
+                            resultDiv.textContent = isToxic
+                                ? 'Câu này là Toxic!'
+                                : 'Câu này không phải Toxic.';
+
+                            // Ẩn kết quả sau 3 giây
+                            setTimeout(() => {
+                                resultDiv.textContent = 'result';
+                                resultDiv.className = 'result hidden';
+                            }, 3000);
+
+                            // // Thêm dòng mới vào bảng lịch sử
+                            history.push({ sentence, isToxic });
+
+                            // Xóa nội dung ô input
+                            document.getElementById('sentence').value = '';
+                            // focus vào ô input
+                            document.getElementById('sentence').focus();
+                        })
+                        .catch(error => console.error('Error:', error));
+                });
+        </script>
+    </body>
+</html>
