@@ -1,17 +1,24 @@
-# Sử dụng Python 3.12 làm base image
-FROM python:3.9.7-slim
+# Sử dụng image Python chính thức
+FROM python:3.12.6
 
-# Thiết lập thư mục làm việc trong container
+# Tạo thư mục làm việc trong container
 WORKDIR /app
 
-# Sao chép tất cả các tệp trong thư mục hiện tại vào container
+# Copy file requirements.txt vào container
+COPY requirements.txt .
+
+# Tạo môi trường ảo và cài đặt các thư viện từ requirements.txt
+RUN python -m venv .venv && \
+    ./.venv/bin/pip install -r requirements.txt
+
+# Copy mã nguồn vào container
 COPY . /app
 
-# Cài đặt các thư viện phụ thuộc từ file requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Thiết lập môi trường ảo khi chạy container
+ENV PATH="/.venv/bin:$PATH"
 
-# Mở cổng ứng dụng (nếu cần, ví dụ với Flask hoặc FastAPI)
-EXPOSE 5000
+# Mở cổng nếu cần
+EXPOSE 3000
 
-# Lệnh để chạy ứng dụng (thay "app.py" bằng tên tệp chính của bạn)
+# Lệnh chạy ứng dụng (ví dụ: app.py hoặc app.js)
 CMD ["python", "app.py"]
