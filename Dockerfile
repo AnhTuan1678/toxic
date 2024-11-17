@@ -1,5 +1,5 @@
 # Sử dụng Python 3.12 làm base image
-FROM python:3.10
+FROM python:3.9.7-slim
 
 # Thiết lập thư mục làm việc trong container
 WORKDIR /app
